@@ -40,15 +40,6 @@ export const PATTERN_INFO = {
   },
 };
 
-export const RED_FLAGS = [
-  { id: "xue_jing", label: "精液带血（血精）" },
-  { id: "gao_wan_kuai", label: "睾丸有肿块、明显肿大或突然剧痛" },
-  { id: "fa_re", label: "正在发热，或局部红肿热痛" },
-  { id: "wai_shang", label: "近期有外伤、手术或导尿等操作" },
-  { id: "xin_xue_guan", label: "有心血管疾病史，或正在服用硝酸酯类、西地那非等药物" },
-  { id: "bei_yun", label: "备孕一年以上未成功" },
-];
-
 // 证型题的选项权重
 const W = {
   cold: { shen_yang: 3, pi_shen_yang: 2 },
@@ -77,11 +68,11 @@ export function buildQuestions(data) {
   return [
     {
       id: "q1", part: 1, type: "single",
-      title: "眼下最主要的困扰，最接近哪一项？",
+      title: "眼下最困扰的是哪一项？",
       hint: "选一项即可。这一项决定候选方的范围。",
       options: [
         ...primary.map((s) => ({ id: s.id, label: s.name })),
-        { id: "unsure", label: "说不清，只是觉得状态不如从前" },
+        { id: "unsure", label: "说不清，只是觉得状态不如从前", wide: true },
       ],
     },
     {
@@ -297,8 +288,4 @@ export function decodeAnswers(str) {
   } catch {
     return null;
   }
-}
-
-export function hasRedFlag(flags) {
-  return Array.isArray(flags) && flags.some((f) => f && f !== "none");
 }

@@ -1,15 +1,15 @@
 // 视图渲染
 import { symptomName, patternName, filterRecipes } from "./data.js";
-import { buildQuestions, recommend, PATTERN_INFO, RED_FLAGS, encodeAnswers } from "./quiz.js";
+import { buildQuestions, recommend, PATTERN_INFO, encodeAnswers } from "./quiz.js";
 import { timeAgo, timeFull } from "./store.js";
 
 export const esc = (s = "") =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const RISK = {
-  A: { mark: "甲", label: "药食同源", hint: "以食材为主，可作日常饮食参考；「适量」仍因人而异。" },
-  B: { mark: "乙", label: "含中药材", hint: "属药膳而非普通饮食。中药材有偏性，证型不符会适得其反，请由中医师确认后再用。" },
-  C: { mark: "丙", label: "仅知识条目", hint: "含毒性药材、动物药或药酒，只在知识层面展示，不建议自行制作或服用。" },
+  A: { mark: "甲", label: "药食同源", hint: "以食材为主，当成一道汤就行。" },
+  B: { mark: "乙", label: "含中药材", hint: "含中药材，有偏性；寒热搞反了只会更难受。" },
+  C: { mark: "丙", label: "仅知识条目", hint: "含毒性药、动物药或药酒，只供围观，别动手。" },
 };
 
 const riskMark = (level) => {
@@ -31,8 +31,9 @@ export function home(root, data, { last, count = 0 } = {}) {
 
   root.innerHTML = `
   <section class="hero">
+    <p class="hero-kick">网传偏方 · 仅供学习娱乐</p>
     <h1 class="h1 hero-t">食养方剂</h1>
-    <p class="hero-p">一册民间食疗汤方。先圈定症状范围，再按寒热虚实收窄，最后给出几条候选，以及选中它的理由。</p>
+    <p class="hero-p">${data.recipes.length} 条汤方，先圈症状，再按寒热虚实收窄，最后挑几条给你看理由。</p>
     <div class="act act-hero">
       <a class="btn btn-primary" href="#/quiz">开始自测</a>
       <a class="btn" href="#/library">翻方剂库</a>
@@ -61,58 +62,7 @@ export function home(root, data, { last, count = 0 } = {}) {
 
   <p class="facts">${data.recipes.length} 方 · ${data.chapters.length} 门 · ${contra} 附偏性提示</p>
 
-  <details class="brief">
-    <summary>这是什么，能做什么</summary>
-    <div>
-      <p>底本是一册民间食疗汤方，每方只有「原料 / 制作 / 用法 / 功效 / 宜忌」五栏。原书没有说同一症状下几十个方该怎么挑，
-      所以这里不做「一症一方」，只做<strong>收窄范围</strong>：症状圈定池子，寒热虚实排一次序，再把每条为什么被选中摊开给你看。</p>
-      <p>中医辨证要望闻问切，舌象与脉象问卷取不到。这里的「倾向」是检索结果，不是诊断，也不该照着网页自己抓药。身体不适，请就医。</p>
-    </div>
-  </details>
-
-  <p class="fine" style="text-align:center">数据来源与已知局限，见 <a href="#/about">凡例</a>。</p>`;
-}
-
-/* ── 自测：筛查 ───────────────────────────────────────── */
-
-export function gate(root, { onSubmit }) {
-  root.innerHTML = `
-  <div class="quiz">
-    <div class="panel">
-      <p class="kick">开始之前</p>
-      <h2 class="h2">先确认几件要紧的事</h2>
-      <p class="hint">下面这些情况，食疗帮不上忙，需要面诊与检查。有就勾上，没有就直接开始。</p>
-      <div class="opts" data-flags>
-        ${RED_FLAGS.map(
-          (f) => `<label class="opt">
-            <input type="checkbox" value="${f.id}">
-            <span class="mark"></span>
-            <span>${esc(f.label)}</span>
-          </label>`
-        ).join("")}
-      </div>
-      <div class="act">
-        <button class="btn btn-primary btn-block" data-act="go">以上都没有，开始自测</button>
-      </div>
-      <p class="fine">本页只做知识整理与自测参考，不构成医疗建议。作答只在你的浏览器里计算，不会上传、不做统计。</p>
-    </div>
-  </div>`;
-
-  const btn = root.querySelector('[data-act="go"]');
-  const boxes = [...root.querySelectorAll("[data-flags] input")];
-
-  const sync = () => {
-    const n = boxes.filter((b) => b.checked).length;
-    boxes.forEach((b) => b.closest(".opt").classList.toggle("is-on", b.checked));
-    btn.textContent = n ? `我勾选了 ${n} 项，看看该怎么处理` : "以上都没有，开始自测";
-    btn.classList.toggle("btn-primary", n === 0);
-    btn.classList.toggle("btn-alert", n > 0);
-  };
-  boxes.forEach((b) => b.addEventListener("change", sync));
-
-  btn.addEventListener("click", () => {
-    onSubmit(boxes.filter((b) => b.checked).map((b) => b.value));
-  });
+  <p class="fine fine-c">这册子怎么来的、哪儿不准，见 <a href="#/about">凡例</a>。</p>`;
 }
 
 /* ── 自测：题目 ───────────────────────────────────────── */
@@ -149,7 +99,7 @@ export function question(root, data, state, { onNext, onBack, onExit }) {
       <div class="opts${q.options.length > 8 ? " cols" : ""}">
         ${q.options
           .map(
-            (o) => `<label class="opt${pickedArr.includes(o.id) ? " is-on" : ""}">
+            (o) => `<label class="opt${pickedArr.includes(o.id) ? " is-on" : ""}${o.wide ? " is-wide" : ""}">
               <input type="${isMulti ? "checkbox" : "radio"}" name="${q.id}" value="${o.id}" ${
               pickedArr.includes(o.id) ? "checked" : ""
             }>
@@ -170,7 +120,8 @@ export function question(root, data, state, { onNext, onBack, onExit }) {
             : `<button class="btn btn-text" data-act="exit">退出</button>`
         }
       </div>
-      ${q.optional ? `<p class="fine">这一问可以跳过，不影响使用。</p>` : ""}
+      ${q.optional ? `<p class="fine fine-c">这一问可以跳过，不影响使用。</p>` : ""}
+      ${state.step === 0 ? `<p class="fine fine-c">娱乐向的检索测验。结果不算诊断，别照着抓药。</p>` : ""}
     </div>
   </div>`;
 
@@ -196,29 +147,6 @@ export function question(root, data, state, { onNext, onBack, onExit }) {
   root.querySelector('[data-act="exit"]')?.addEventListener("click", onExit);
 }
 
-/* ── 红旗页 ───────────────────────────────────────────── */
-
-export function care(root, flags = []) {
-  const hit = RED_FLAGS.filter((f) => flags.includes(f.id));
-  root.innerHTML = `
-  <div class="quiz">
-    <div class="panel">
-      <p class="kick">止步于此</p>
-      <h2 class="h2">这些情况，先去看医生</h2>
-      <p class="hint">你勾选了下面 ${hit.length} 项。这一类情况需要面诊、查体与化验，不是食疗能处理的，也不该在这里翻方子。</p>
-      <ul class="hitlist">${hit.map((f) => `<li>${esc(f.label)}</li>`).join("")}</ul>
-      <div class="notice">
-        <strong>建议：</strong>到正规医院的男科、泌尿外科或中医科就诊。血精、睾丸肿块、急性疼痛属于需要尽快排查的情况，不要拖；
-        备孕一年未成功，建议夫妻双方同时检查。
-      </div>
-      <div class="act">
-        <a class="btn btn-primary btn-block" href="#/">返回首页</a>
-        <a class="btn btn-text" href="#/library">只看方剂库</a>
-      </div>
-    </div>
-  </div>`;
-}
-
 /* ── 结果页 ───────────────────────────────────────────── */
 
 export function result(root, data, answers, opts = {}) {
@@ -242,9 +170,9 @@ export function result(root, data, answers, opts = {}) {
 
   root.innerHTML = `
   <header class="phead">
-    <p class="kick">自测结果</p>
+    <p class="kick">自测结果 · 仅供学习娱乐</p>
     <h1 class="h1">${first ? esc(patternName(data, first.id)) : "证型线索不足"}</h1>
-    <p class="sub">${savedAt ? timeAgo(savedAt) + " · " : ""}${total} 条方剂与你的症状有重叠，下面取前 ${list.length} 条</p>
+    <p class="sub">${savedAt ? timeAgo(savedAt) + " · " : ""}${data.recipes.length} 条里，${total} 条跟你的症状沾边，下面取前 ${list.length} 条</p>
   </header>
 
   <div class="verdict">
@@ -286,15 +214,17 @@ export function result(root, data, answers, opts = {}) {
       .join("")}
   </div>
 
-  <div class="act act-wide">
+  <div class="act act-pair">
     <a class="btn" href="#/quiz?new=1">重新自测</a>
-    <button class="btn" data-act="share">复制分享链接</button>
-    <button class="btn btn-text" data-act="c">${includeC ? "隐藏丙层条目" : "带上丙层条目"}</button>
+    <button class="btn" data-act="share">复制链接</button>
   </div>
+  <p class="fine fine-c">
+    <button class="linkbtn" data-act="c">${includeC ? "收起丙层条目（含毒性药、动物药）" : "显示丙层条目（含毒性药、动物药）"}</button>
+  </p>
 
   <div class="notice">
-    这份结果把二百八十一方收窄到几条，并给出每条被选中的依据，方便你对照原文判断是否对症。
-    它<strong>不能</strong>替代望闻问切——舌苔厚薄、脉象虚实、病程长短，问卷都取不到。含中药材者，请由中医师看过再用；丙层条目只作知识展示。
+    <p>这几条只是<strong>字面沾边</strong>，谈不上对症。真不舒服，看医生比看这页靠谱。</p>
+    <p>血精、睾丸有肿块、正发热，或备孕一年没动静——这几样别翻方子，直接挂泌尿外科或男科。</p>
   </div>`;
 
   root.querySelector('[data-act="share"]').addEventListener("click", async (e) => {
@@ -306,7 +236,7 @@ export function result(root, data, answers, opts = {}) {
     } catch {
       window.prompt("复制这个链接分享：", url);
     }
-    setTimeout(() => (btn.textContent = "复制分享链接"), 1800);
+    setTimeout(() => (btn.textContent = "复制链接"), 1800);
   });
 
   root.querySelector('[data-act="c"]').addEventListener("click", onToggleC);
@@ -368,7 +298,8 @@ export function library(root, data, initial, { onChange, onOpen, restoreScroll }
 
   const paint = () => {
     const all = filterRecipes(data, { chapter: state.ch, pattern: state.pat, risk: state.risk, keyword: state.q });
-    countEl.textContent = `${all.length} 条${state.shown < all.length ? `，已显示 ${state.shown}` : ""}`;
+    const filtered = !!(state.ch || state.pat || state.risk || state.q);
+    countEl.textContent = filtered ? `命中 ${all.length} 条` : "";
     rowsEl.innerHTML = all.slice(0, state.shown).map(rowHTML).join("") || `<p class="empty">没有匹配的条目</p>`;
     moreEl.innerHTML =
       all.length > state.shown
@@ -446,7 +377,7 @@ export function recipe(root, data, id, { from = "library", onBack } = {}) {
 
   <header class="phead">
     <h1 class="h1">${esc(r.name)}</h1>
-    <p class="sub">${esc(r.chapter_name)} · 原书 p.${r.page} · ${riskMark(level)} · ${
+    <p class="sub">${esc(r.chapter_name)} · 原文 p.${r.page} · ${riskMark(level)} · ${
       r.patterns?.length ? esc(r.patterns.map((p) => patternName(data, p)).join("、")) : "原文未标证型"
     }</p>
   </header>
@@ -457,9 +388,8 @@ export function recipe(root, data, id, { from = "library", onBack } = {}) {
       "制作",
       hideMethod
         ? `<div class="veil">
-            <p><strong>本条目归入丙层。</strong>含毒性药材、动物药或药酒，只作知识条目展示，不提供操作指引。</p>
-            <p>原文做法可展开查看，但请勿据此自制——此类方剂的炮制与用量需专业处理。</p>
-            <button class="btn btn-sm" data-act="reveal">仍要查看原文制法</button>
+            <p><strong>丙层条目。</strong>含毒性药、动物药或药酒，原文做法先遮住。</p>
+            <button class="btn btn-sm" data-act="reveal">还是想看</button>
           </div>
           <div data-method hidden>${esc(r.method)}</div>`
         : esc(r.method)
@@ -469,7 +399,7 @@ export function recipe(root, data, id, { from = "library", onBack } = {}) {
     ${
       r.caution
         ? blk("宜忌", esc(r.caution))
-        : `<section class="blk blk-mute"><h3>宜忌</h3><div class="blk-b">原文未载禁忌。含中药材者，请由中医师看过再用。</div></section>`
+        : `<section class="blk blk-mute"><h3>宜忌</h3><div class="blk-b">原文没写禁忌。</div></section>`
     }
     ${
       cls.length
@@ -481,7 +411,7 @@ export function recipe(root, data, id, { from = "library", onBack } = {}) {
                ${(c.notes || []).map((n) => `<li><em>${esc(n.herb)}</em>${esc(n.note)}</li>`).join("")}
              </ul>
              ${auds.length ? `<p class="aud">需留意：${auds.map((a) => esc(a.label)).join("；")}。</p>` : ""}
-             <p class="src">本栏按原料成分查表推出，非原书文字，也不能替代医师对该个体的判断。</p>`
+             <p class="src">按原料查表推的，不是原文，也代替不了医师的判断。</p>`
           )
         : `<section class="blk blk-mute"><h3>偏性</h3><div class="blk-b">原料中未识别出需要提示偏性的药材。</div></section>`
     }
@@ -519,45 +449,42 @@ export function about(root, data) {
 
   root.innerHTML = `
   <header class="phead">
-    <p class="kick">凡例</p>
-    <h1 class="h1">这份数据是怎么来的</h1>
+    <p class="kick">凡例 · 仅供学习娱乐</p>
+    <h1 class="h1">这册子怎么来的</h1>
   </header>
 
   <div class="panel prose">
-    <p>底本是一册民间食疗汤方，共 ${data.chapters.length} 类 ${total} 方，每方原本只有「原料 / 制作 / 用法 / 功效 / 宜忌」五栏。
-    检索所需的症状、证型、偏性都是后加的。</p>
+    <p>底本是一册网上流传的《释永信房中补肾秘方》，共 ${data.chapters.length} 类 ${total} 方，每方原本只有「原料 / 制作 / 用法 / 功效 / 宜忌」五栏。
+    症状、证型、偏性都是后加的——加得不一定对。</p>
 
     <h3>整理过程</h3>
-    <p>原书扫描件的文本层里，数字与标点被替换成了替身字形，机器抽取会得到 <code>#对$</code> 这类乱码。因汉字正确、数字不可恢复，
-    改为<strong>按页面图像逐页重录</strong>，再用文本层的汉字序列做交叉校验（平均相似度 99.7%）。</p>
+    <p>扫描件的文本层里，数字和标点被换成了替身字形，机器抽出来是 <code>#对$</code> 这种乱码。汉字是对的，数字救不回来，于是
+    <strong>照着页面逐页重录</strong>，再用文本层的汉字序列比对（平均 99.7%）。</p>
 
-    <h3>派生字段与其可靠度</h3>
-    <table class="kv">
-      <tr><th>字段</th><th>做法</th><th>可靠度</th></tr>
-      <tr><td>症状</td><td>从「适用于……」句式按关键词抽取</td><td>较高</td></tr>
-      <tr><td>证型</td><td>从功效中的「肾阳虚 / 阴虚 / 湿热」等词判定，缺则按治法推断</td><td>原文 ${total - noPattern - inferred}、推断 ${inferred}、仍缺 ${noPattern}</td></tr>
-      <tr><td>风险分层</td><td>按药材目录判定甲乙丙</td><td>规则判定，非临床评估</td></tr>
-      <tr><td>原文宜忌</td><td>照抄原书</td><td>仅 ${total - noCaution} 条有</td></tr>
-      <tr><td>偏性</td><td>按原料成分查表推出</td><td>覆盖 ${hasContra} 条，规则性提示</td></tr>
-    </table>
+    <h3>后加的字段，靠不靠得住</h3>
+    <div class="kv">
+      <div class="kv-r"><span class="kv-k">症状</span><span class="kv-v">较高</span><div class="kv-d">从「适用于……」句式按关键词抽</div></div>
+      <div class="kv-r"><span class="kv-k">证型</span><span class="kv-v">原文 ${total - noPattern - inferred} · 推断 ${inferred} · 缺 ${noPattern}</span><div class="kv-d">从功效里的「肾阳虚 / 阴虚 / 湿热」等词判定，缺则按治法推</div></div>
+      <div class="kv-r"><span class="kv-k">风险分层</span><span class="kv-v">规则判定</span><div class="kv-d">按药材目录判甲、乙、丙三层</div></div>
+      <div class="kv-r"><span class="kv-k">原文宜忌</span><span class="kv-v">${total - noCaution} / ${total} 条</span><div class="kv-d">照抄，不补写</div></div>
+      <div class="kv-r"><span class="kv-k">偏性</span><span class="kv-v">${hasContra} 条</span><div class="kv-d">按原料查表推的，不是原文</div></div>
+    </div>
 
-    <h3>为什么不是「一个症状一个方」</h3>
-    <p>原书从不说明同一症状下几十个方该怎么挑。实测功效覆盖两个以上症状的方占六成；阳痿一章仅 41 方，却有一百多个方的功效里提到阳痿。
-    所以「症状 → 唯一答案」在数据上立不住。这里做的是<strong>收窄范围并给出依据</strong>，选不选、用不用，仍要由人或医师判断。</p>
+    <h3>为什么不是一个症状一个方</h3>
+    <p>原文从没说过同一症状下几十个方该怎么挑。六成方子的功效覆盖两个以上症状；阳痿一章只有 41 方，功效里提到阳痿的却有一百多个。
+    所以「症状 → 唯一答案」在数据上立不住，这里只做<strong>收窄并给理由</strong>。</p>
 
     <details>
-      <summary>明确做不到的</summary>
+      <summary>做不到的</summary>
       <ul>
-        <li>没有舌象、脉象、问诊细节，证型只到「倾向」。</li>
-        <li>偏性由规则推出，认不出炮制差异、个体过敏与合并用药。</li>
-        <li>不判断药物相互作用，不判断与西药同服的禁忌。</li>
+        <li>没有舌象、脉象，证型只到「倾向」。</li>
+        <li>认不出炮制差异、个体过敏与合并用药。</li>
+        <li>不判断药物相互作用，也不管你还在吃别的药。</li>
         <li>不提供剂量换算、采购与炮制指引。</li>
       </ul>
     </details>
 
-    <h3>免责</h3>
-    <p><strong>本站为中医药膳知识的整理与学习项目，不构成医疗建议，不能替代面诊。</strong>
-    页面中所有「倾向」「候选」均为检索排序结果，不是诊断结论，也不是用药推荐。</p>
+    <p class="prose-note">说到底，这是个整理偏方的检索玩具，<strong>仅供学习娱乐</strong>。不是医书，不能替代面诊，身体不舒服请去医院。</p>
   </div>`;
 }
 

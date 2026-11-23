@@ -1,22 +1,24 @@
 // 路由与装配
 import { loadData } from "./data.js";
 import * as V from "./ui.js";
-import { decodeAnswers, hasRedFlag } from "./quiz.js";
+import { decodeAnswers } from "./quiz.js";
 import { getResults, getResult, saveResult, getLib, saveLib, clearResults } from "./store.js";
 
 const app = document.getElementById("app");
 let DATA = null;
 
 // 自测会话：只在本次标签页内保留，刷新不丢，关掉就没了
-const QUIZ_KEY = "sf.quiz.v2";
-const GATE_KEY = "sf.gate.v2";
+const QUIZ_KEY = "sf.quiz.v3";
 
-const quiz = { phase: "gate", step: 0, flags: [], answers: {} };
+const quiz = { step: 0, answers: {} };
 
 function loadQuiz() {
   try {
     const s = JSON.parse(sessionStorage.getItem(QUIZ_KEY) || "null");
-    if (s && typeof s === "object") Object.assign(quiz, s);
+    if (s && typeof s === "object") {
+      quiz.step = Number.isInteger(s.step) ? s.step : 0;
+      quiz.answers = s.answers && typeof s.answers === "object" ? s.answers : {};
+    }
   } catch {
     /* 忽略 */
   }
@@ -24,16 +26,14 @@ function loadQuiz() {
 
 function saveQuiz() {
   try {
-    sessionStorage.setItem(QUIZ_KEY, JSON.stringify({ ...quiz }));
+    sessionStorage.setItem(QUIZ_KEY, JSON.stringify(quiz));
   } catch {
     /* 忽略 */
   }
 }
 
 function resetQuiz() {
-  quiz.phase = sessionStorage.getItem(GATE_KEY) ? "q" : "gate";
   quiz.step = 0;
-  quiz.flags = [];
   quiz.answers = {};
   saveQuiz();
 }
@@ -67,7 +67,7 @@ function setNav(path) {
     // 有记录时才露出「记录」入口，首次来访不占位置
     if (key === "history") a.hidden = !hasHistory;
     const on =
-      (key === "quiz" && /^\/(quiz|care|result)/.test(path)) ||
+      (key === "quiz" && /^\/(quiz|result)/.test(path)) ||
       (key === "library" && /^\/(library|r\/)/.test(path)) ||
       (key === "history" && path.startsWith("/history")) ||
       (key === "about" && path.startsWith("/about"));
@@ -113,11 +113,6 @@ function render() {
       history.replaceState(null, "", "#/quiz");
     }
     renderQuiz();
-    return;
-  }
-
-  if (path === "/care") {
-    V.care(app, (params.get("f") || "").split(",").filter(Boolean));
     return;
   }
 
@@ -213,30 +208,6 @@ function render() {
 /* ── 自测流程 ─────────────────────────────────────────── */
 
 function renderQuiz() {
-  if (quiz.phase === "gate" && !sessionStorage.getItem(GATE_KEY)) {
-    V.gate(app, {
-      onSubmit: (flags) => {
-        quiz.flags = flags;
-        if (hasRedFlag(flags)) {
-          go(`#/care?f=${flags.join(",")}`);
-          return;
-        }
-        try {
-          sessionStorage.setItem(GATE_KEY, "1");
-        } catch {
-          /* 忽略 */
-        }
-        quiz.phase = "q";
-        quiz.step = 0;
-        quiz.answers = {};
-        saveQuiz();
-        render();
-      },
-    });
-    return;
-  }
-
-  quiz.phase = "q";
   const total = V.questionCount(DATA);
   if (quiz.step >= total) quiz.step = 0;
 
