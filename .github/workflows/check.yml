@@ -1,0 +1,34 @@
+name: data-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 数据自检
+        run: python tools/validate.py
+
+      - name: 确认 data/ 与源文件同步
+        run: |
+          python tools/build-data.py
+          if ! git diff --quiet -- data/; then
+            echo "::error::data/ 与 释永信房中补肾秘方.jsonl 或 tools/ 下的规则不一致，请本地重跑 tools/build-data.py 并提交"
+            git --no-pager diff --stat -- data/
+            exit 1
+          fi
+
+      - name: 纯前端文件语法检查
+        run: |
+          for f in assets/js/*.js; do node --check "$f"; done
+          echo "JS 语法正常"

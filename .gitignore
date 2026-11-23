@@ -1,0 +1,16 @@
+# 系统与工具
+.DS_Store
+Thumbs.db
+node_modules/
+*.log
+
+# 本地智能体工作目录（含会话记忆，不入库）
+.workbuddy/
+
+# 底本扫描件不入库：含第三方水印、体积大，整理稿（.md / .jsonl）已够复现数据
+释永信房中补肾秘方.pdf
+*.pdf
+
+# 临时文件
+_t*.html
+shots/

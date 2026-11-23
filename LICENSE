@@ -1,0 +1,35 @@
+MIT License（适用于代码）
+
+Copyright (c) 2026 shiyang-fangji contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+内容与数据的许可（data/、tools/herb-safety.json 及文本整理稿）
+
+以 CC BY-NC-SA 4.0 授权：署名—非商业性使用—相同方式共享。
+全文见 https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh
+
+说明：
+1. 「代码」指 index.html、assets/、tools/*.py、.github/ 等实现文件，适用上面的 MIT 条款。
+2. 「内容与数据」指 281 方的原文整理（原料 / 制作 / 用法 / 功效 / 宜忌）、派生标注与药材偏性表，
+   适用 CC BY-NC-SA 4.0：可自由复制、分发、改编，须署名、不得用于商业目的、改编后须以相同协议共享。
+3. 本项目是对一册民间食疗方的整理与检索工具，不构成医疗建议。使用者据此制作或服用任何方剂，
+   风险自负；作者与贡献者不承担任何责任。
