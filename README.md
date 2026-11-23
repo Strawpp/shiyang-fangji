@@ -6,6 +6,10 @@
 
 **在线站点**：<https://strawpp.github.io/shiyang-fangji/>
 
+![首页](assets/shot-home.jpg)
+
+![自测结果](assets/shot-result.jpg)
+
 > **本项目为中医药膳知识的整理与学习项目，不构成医疗建议，不能替代面诊。**
 > 页面中的「证型倾向」「候选方剂」均为检索排序结果，不是诊断结论，也不是用药推荐。身体不适请及时就医。
 
